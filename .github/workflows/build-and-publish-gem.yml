@@ -63,9 +63,15 @@ jobs:
       - name: Publish to GitHub Packages
         if: github.event_name == 'push' || github.event.inputs.publish == 'true'
         run: |
+          mkdir -p ~/.gem
+          echo ":github: Bearer ${{ secrets.GITHUB_TOKEN }}" > ~/.gem/credentials
+          chmod 0600 ~/.gem/credentials
+          
+          OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          
           for gem in *.gem; do
             echo "Publishing ${gem}..."
-            gem push --key github "${gem}"
+            gem push --key github --host "https://rubygems.pkg.github.com/${OWNER}" "${gem}"
           done
       
       - name: Upload gems as artifacts
