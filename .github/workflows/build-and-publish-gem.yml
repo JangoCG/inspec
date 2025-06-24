@@ -50,7 +50,12 @@ jobs:
           echo "Building InSpec gems..."
           gem build inspec-core.gemspec
           gem build inspec.gemspec
-          gem build inspec-bin/inspec-bin.gemspec
+          
+          # Build inspec-bin from its own directory
+          cd inspec-bin
+          gem build inspec-bin.gemspec
+          mv *.gem ../
+          cd ..
           
           # List built gems
           ls -la *.gem
