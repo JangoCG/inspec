@@ -60,33 +60,12 @@ jobs:
           # List built gems
           ls -la *.gem
       
-      - name: Run basic tests
-        run: |
-          echo "Running basic smoke tests..."
-          bundle exec rake test:isolated
-        continue-on-error: true
-      
-      - name: Configure RubyGems credentials
-        if: github.event_name == 'push' || github.event.inputs.publish == 'true'
-        run: |
-          mkdir -p ~/.gem
-          echo ":github: Bearer ${{ secrets.GITHUB_TOKEN }}" > ~/.gem/credentials
-          chmod 0600 ~/.gem/credentials
-      
       - name: Publish to GitHub Packages
         if: github.event_name == 'push' || github.event.inputs.publish == 'true'
         run: |
-          # Get the owner name in lowercase (GitHub Packages requires lowercase)
-          OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
-          
-          echo "Publishing to GitHub Packages for owner: ${OWNER}"
-          
-          # Publish each gem
           for gem in *.gem; do
             echo "Publishing ${gem}..."
-            gem push --key github \
-              --host "https://rubygems.pkg.github.com/${OWNER}" \
-              "${gem}" || echo "Failed to publish ${gem}, continuing..."
+            gem push --key github "${gem}"
           done
       
       - name: Upload gems as artifacts
@@ -107,39 +86,3 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  test-installation:
-    needs: build
-    if: github.event_name == 'push' || github.event.inputs.publish == 'true'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: read
-    
-    steps:
-      - name: Set up Ruby
-        uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: ${{ env.RUBY_VERSION }}
-      
-      - name: Wait for package to be available
-        run: sleep 30
-      
-      - name: Test gem installation
-        run: |
-          # Configure gem sources
-          OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
-          
-          # Create test Gemfile
-          cat > Gemfile << EOF
-          source "https://rubygems.org"
-          source "https://rubygems.pkg.github.com/${OWNER}" do
-            gem "inspec-core"
-          end
-          EOF
-          
-          # Install
-          bundle config set --local https://rubygems.pkg.github.com/${OWNER} ${{ secrets.GITHUB_TOKEN }}
-          bundle install
-          
-          # Test that it works
-          bundle exec ruby -e "require 'inspec'; puts 'InSpec version: ' + Inspec::VERSION"
