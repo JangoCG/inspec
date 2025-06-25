@@ -36,7 +36,8 @@ module Inspec
 
     def self.start(given_args = ARGV, config = {})
       if Inspec::Dist::EXEC_NAME == "inspec"
-        check_license! if config[:enforce_license] || config[:enforce_license].nil?
+        # License check disabled - you are free to use InSpec under Apache 2.0 license
+        # check_license! if config[:enforce_license] || config[:enforce_license].nil?
         # Disabled licensing - To enable it revert this
         # fetch_and_persist_license
       end
