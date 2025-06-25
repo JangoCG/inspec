@@ -15,28 +15,14 @@ module Inspec
     end
 
     def self.determine_backend_class
+      # Telemetry completely disabled for custom build
       # Don't perform telemetry action for other InSpec distros
       # Don't perform telemetry action if running under Automate - Automate does LDC tracking for us
       # Don't perform telemetry action if license is a commercial license
       # Don't perform telemetry action if running under Test Kitchen
 
-      if Inspec::Dist::EXEC_NAME != "inspec" ||
-          Inspec::Telemetry::RunContextProbe.under_automate? ||
-          license&.license_type&.downcase == "commercial" ||
-          Inspec::Telemetry::RunContextProbe.guess_run_context == "test-kitchen"
-
-        Inspec::Log.debug "Determined telemetry operation is not applicable and hence aborting it."
-        return Inspec::Telemetry::Null
-      end
-
-      if Inspec::Dist::EXEC_NAME == "inspec" && telemetry_disabled?
-        # Issue a warning if an InSpec user is explicitly trying to opt out of telemetry using cli option
-        Inspec::Log.warn "Telemetry opt-out is not permissible."
-      end
-
-      Inspec::Log.debug "Determined HTTP instance for telemetry"
-
-      Inspec::Telemetry::HTTP
+      Inspec::Log.debug "Telemetry disabled in custom build - no data will be sent to Chef servers."
+      return Inspec::Telemetry::Null
     end
 
     def self.license
